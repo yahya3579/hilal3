@@ -696,7 +696,7 @@ class GetAllEbooksView(APIView):
                 "error": "Invalid page or page_size parameter. Must be integers."
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        serializer = EbookSerializer(ebooks, many=True)
+        serializer = EbookSerializer(ebooks, many=True, context={'request': request})
         
         # Calculate pagination metadata
         total_pages = (total_count + page_size - 1) // page_size if page_size > 0 else 0
@@ -727,7 +727,7 @@ class SingleEbookView(APIView):
     def get(self, request, pk):
         try:
             ebook = Ebook.objects.get(pk=pk)
-            serializer = EbookSerializer(ebook)
+            serializer = EbookSerializer(ebook, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Ebook.DoesNotExist:
             return Response({"error": "Ebook not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -746,8 +746,9 @@ class CreateOrUpdateEbookView(APIView):
     def post(self, request):
         serializer = EbookSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Ebook created successfully", "data": serializer.data}, status=status.HTTP_201_CREATED)
+            ebook = serializer.save()
+            response_serializer = EbookSerializer(ebook, context={'request': request})
+            return Response({"message": "Ebook created successfully", "data": response_serializer.data}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, pk):
@@ -755,8 +756,9 @@ class CreateOrUpdateEbookView(APIView):
             ebook = Ebook.objects.get(pk=pk)
             serializer = EbookSerializer(ebook, data=request.data, partial=True)
             if serializer.is_valid():
-                serializer.save()
-                return Response({"message": "Ebook updated successfully", "data": serializer.data}, status=status.HTTP_200_OK)
+                ebook = serializer.save()
+                response_serializer = EbookSerializer(ebook, context={'request': request})
+                return Response({"message": "Ebook updated successfully", "data": response_serializer.data}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Ebook.DoesNotExist:
             return Response({"error": "Magazine not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -773,6 +775,11 @@ class GetArchivedEbooksView(ListAPIView):
     def get_queryset(self):
         return Ebook.objects.filter(is_archived=True)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
 class GetActiveEbooksView(APIView):
     """
     API to retrieve all ebooks that are not archived.
@@ -781,7 +788,7 @@ class GetActiveEbooksView(APIView):
 
     def get(self, request):
         ebooks = Ebook.objects.filter(is_archived=False)
-        serializer = EbookSerializer(ebooks, many=True)
+        serializer = EbookSerializer(ebooks, many=True, context={'request': request})
         return Response({"message": "Active ebooks retrieved successfully", "data": serializer.data}, status=status.HTTP_200_OK)
 
 class ToggleEbookArchiveView(APIView):
@@ -2258,6 +2265,7 @@ class FileUploadView(APIView):
             file = request.FILES.get('file')
             entity_type = request.data.get('entity_type')
             entity_id = request.data.get('entity_id')
+            file_purpose = request.data.get('file_purpose', '').lower()
             
             if not file:
                 return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2266,7 +2274,7 @@ class FileUploadView(APIView):
                 return Response({'error': 'entity_type and entity_id are required'}, status=status.HTTP_400_BAD_REQUEST)
             
             # Validate entity type
-            valid_entity_types = ['articles', 'authors', 'gallery', 'magazines', 'publications', 'billboards', 'magazinesPdf']
+            valid_entity_types = ['articles', 'authors', 'gallery', 'magazines', 'publications', 'billboards', 'magazinesPdf', 'ebooks']
             if entity_type not in valid_entity_types:
                 return Response({'error': f'Invalid entity_type. Must be one of: {valid_entity_types}'}, status=status.HTTP_400_BAD_REQUEST)
             
@@ -2274,21 +2282,41 @@ class FileUploadView(APIView):
             file_extension = os.path.splitext(file.name)[1].lower()
             
             # Validate file type based on entity type
+            # Determine storage rules based on entity type
             if entity_type == 'magazines':
-                # Magazines can have both images and PDFs
-                if file_extension not in ['.jpg', '.jpeg', '.png', '.pdf']:
-                    return Response({'error': 'Invalid file type. Magazines support: .jpg, .jpeg, .png, .pdf'}, status=status.HTTP_400_BAD_REQUEST)
+                allowed_extensions = ['.jpg', '.jpeg', '.png', '.pdf']
+                subdirectory_parts = []
             elif entity_type == 'magazinesPdf':
-                # Magazine PDFs only support PDF files
-                if file_extension != '.pdf':
-                    return Response({'error': 'Invalid file type. Magazine PDFs only support .pdf files'}, status=status.HTTP_400_BAD_REQUEST)
+                allowed_extensions = ['.pdf']
+                subdirectory_parts = []
+            elif entity_type == 'ebooks':
+                cover_extensions = ['.jpg', '.jpeg', '.png', '.jfif']
+                document_extensions = ['.pdf']
+                
+                if file_purpose not in ['cover', 'document']:
+                    return Response({'error': "file_purpose must be either 'cover' or 'document' for ebooks"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if file_purpose == 'cover':
+                    allowed_extensions = cover_extensions
+                    subdirectory_parts = ['ebooks', 'covers']
+                else:
+                    allowed_extensions = document_extensions
+                    subdirectory_parts = ['ebooks', 'documents']
             else:
-                # Other entities only support images
-                if file_extension not in ['.jpg', '.jpeg', '.png']:
-                    return Response({'error': 'Invalid file type. Only .jpg, .jpeg, .png are supported'}, status=status.HTTP_400_BAD_REQUEST)
+                allowed_extensions = ['.jpg', '.jpeg', '.png', '.jfif']
+                subdirectory_parts = []
             
-            # Create directory structure if it doesn't exist
-            upload_dir = os.path.join(settings.MEDIA_ROOT, 'uploads', entity_type)
+            if file_extension not in allowed_extensions:
+                return Response({'error': f'Invalid file type. Supported extensions: {", ".join(allowed_extensions)}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Build upload directory
+            base_upload_parts = ['uploads']
+            if entity_type == 'ebooks' and subdirectory_parts:
+                upload_parts = base_upload_parts + subdirectory_parts
+            else:
+                upload_parts = base_upload_parts + [entity_type]
+            
+            upload_dir = os.path.join(settings.MEDIA_ROOT, *upload_parts)
             os.makedirs(upload_dir, exist_ok=True)
             
             # Generate filename with entity ID
@@ -2305,13 +2333,19 @@ class FileUploadView(APIView):
                     destination.write(chunk)
             
             # Generate the URL for the uploaded file
-            file_url = f"{settings.MEDIA_URL}uploads/{entity_type}/{filename}"
+            if entity_type == 'ebooks' and subdirectory_parts:
+                relative_path = os.path.join('uploads', *subdirectory_parts, filename).replace('\\', '/')
+            else:
+                relative_path = os.path.join('uploads', entity_type, filename).replace('\\', '/')
+            
+            file_url = f"{settings.MEDIA_URL}{relative_path}"
             
             return Response({
                 'message': 'File uploaded successfully',
                 'file_url': file_url,
                 'file_path': file_path,
                 'filename': filename,
+                'relative_path': relative_path,
                 'entity_type': entity_type,
                 'entity_id': entity_id
             }, status=status.HTTP_201_CREATED)

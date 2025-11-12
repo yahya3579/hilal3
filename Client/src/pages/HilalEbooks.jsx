@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import Loader from "../components/Loader/loader";
+import { getEbookCoverUrl, getEbookDocumentUrl } from "../utils/localUpload";
 
 const fetchActiveEbooks = async () => {
     try {
@@ -14,6 +15,8 @@ const fetchActiveEbooks = async () => {
         return []; // Return an empty array in case of an error
     }
 };
+
+const stripHtmlTags = (text = "") => text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 const HilalEbooks = () => {
 
@@ -54,22 +57,17 @@ const HilalEbooks = () => {
 
                                 {/* Archive Items */}
                                 {ebookData.map((issue) => (
-
-
                                     <a
                                         key={issue.id}
-                                        href={issue.doc_url} // Link to the PDF
+                                        href={getEbookDocumentUrl(issue.doc_url) || issue.doc_url} // Link to the PDF
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="border border-gray-200 shadow-sm bg-white overflow-hidden transform transition-all duration-300 hover:scale-105 cursor-pointer"
                                     >
-                                        <div
-                                            key={issue.id}
-                                            className="border border-gray-200 shadow-sm bg-white overflow-hidden transform transition-all duration-300 hover:scale-105 cursor-pointer"
-                                        >
+                                        <div className=" bg-white overflow-hidden transform transition-all duration-300 hover:scale-105 cursor-pointer">
                                             <div className="relative">
                                                 <img
-                                                    src={issue.cover_image}
+                                                    src={getEbookCoverUrl(issue.cover_image) || issue.cover_image}
                                                     alt={issue.title}
                                                     className="w-full aspect-[3/4] object-cover"
                                                 />
@@ -81,6 +79,19 @@ const HilalEbooks = () => {
                                                 <p className="text-xs text-gray-500 text-center mt-0.5">
                                                     ({issue.publish_date})
                                                 </p>
+                                                {issue.description && (
+                                                    <p
+                                                        className="text-[11px] sm:text-xs text-gray-600 mt-1 sm:mt-1.5 text-center"
+                                                        style={{
+                                                            display: "-webkit-box",
+                                                            WebkitBoxOrient: "vertical",
+                                                            WebkitLineClamp: 3,
+                                                            overflow: "hidden"
+                                                        }}
+                                                    >
+                                                        {stripHtmlTags(issue.description)}
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
 

@@ -1,4 +1,8 @@
+from urllib.parse import urljoin, urlparse
+
+from django.conf import settings
 from rest_framework import serializers
+
 from .models import Comments, Articles, Billboards, Ebook, Magazines, Authors, Videos, Publications, Categories, Contributors
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -59,8 +63,74 @@ class MagazineSerializer(serializers.ModelSerializer):
 class EbookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ebook
-        fields = ['id', 'title', 'publish_date', 'language', 'direction', 'status', 'cover_image', 'is_archived','doc_url']
+        fields = ['id', 'title', 'publish_date', 'language', 'direction', 'status', 'cover_image', 'is_archived', 'doc_url', 'description']
         read_only_fields = ['id']
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        request = self.context.get('request') if hasattr(self, 'context') else None
+
+        data['cover_image'] = self._build_file_url(data.get('cover_image'), 'ebooks/covers', request)
+        data['doc_url'] = self._build_file_url(data.get('doc_url'), 'ebooks/documents', request)
+
+        return data
+
+    def validate_cover_image(self, value):
+        return self._normalize_path(value)
+
+    def validate_doc_url(self, value):
+        return self._normalize_path(value)
+
+    def _normalize_path(self, value):
+        """
+        Normalize incoming file paths to store relative media paths when possible.
+        """
+        if not value:
+            return value
+
+        value = value.strip()
+
+        # Convert absolute URLs pointing to our media to relative paths
+        if value.startswith('http://') or value.startswith('https://'):
+            parsed = urlparse(value)
+            value = parsed.path or value
+
+        value = value.lstrip('/')
+
+        # Remove leading slashes
+        media_prefix = settings.MEDIA_URL.lstrip('/')
+        if media_prefix and value.startswith(media_prefix):
+            value = value[len(media_prefix):].lstrip('/')
+
+        return value
+
+    def _build_file_url(self, value, default_subdir, request):
+        """
+        Build a fully qualified URL for stored files.
+        """
+        if not value:
+            return value
+
+        cleaned_value = value.strip()
+
+        # Already an absolute URL
+        if cleaned_value.startswith('http://') or cleaned_value.startswith('https://'):
+            return cleaned_value
+
+        cleaned_value = cleaned_value.lstrip('/')
+
+        if cleaned_value.startswith('uploads/'):
+            relative_path = cleaned_value
+        else:
+            relative_path = f"uploads/{default_subdir}/{cleaned_value}"
+
+        media_relative_url = f"{settings.MEDIA_URL.rstrip('/')}/{relative_path}"
+
+        if request:
+            return request.build_absolute_uri(media_relative_url)
+
+        return media_relative_url
 
 
 class AuthorSerializer(serializers.ModelSerializer):

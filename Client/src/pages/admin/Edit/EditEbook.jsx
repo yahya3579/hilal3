@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { uploadGalleryImage, getFileUrl } from "../../../utils/localUpload";
+import { uploadEbookCover, uploadEbookDocument, getEbookCoverUrl, getEbookDocumentUrl } from "../../../utils/localUpload";
 import useAuthStore from "../../../utils/store";
 import Loader from "../../../components/Loader/loader";
 import { useToast } from "../../../context/ToastContext";
@@ -32,6 +32,7 @@ export default function EditEbook() {
     const fileInputRef = useRef(null);
     const fileInputRefPDF = useRef(null);
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const [formData, setFormData] = useState({
         title: "",
         publish_date: "",
@@ -39,8 +40,8 @@ export default function EditEbook() {
         direction: "",
         status: "Active",
         cover_image: null,
-
         doc_url: null, // Added doc_url field
+        description: "",
     });
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,6 +65,7 @@ export default function EditEbook() {
                 status: data.status || "Active",
                 cover_image: data.cover_image || null,
                 doc_url: data.doc_url || null, // Populate doc_url
+                description: data.description || "",
             });
         },
     });
@@ -96,6 +98,7 @@ export default function EditEbook() {
                 status: ebookData.status || "Active",
                 cover_image: ebookData.cover_image || null,
                 doc_url: ebookData.doc_url || null, // Populate doc_url
+                description: ebookData.description || "",
             });
         }
     }, [ebookId, ebookData]);
@@ -152,7 +155,6 @@ export default function EditEbook() {
     };
 
     const validateForm = () => {
-    const { showToast } = useToast();
         const newErrors = {};
         if (!formData.title.trim()) newErrors.title = "Title is required.";
         if (!formData.publish_date.trim()) {
@@ -182,7 +184,7 @@ export default function EditEbook() {
         // Handle image upload if a new file is selected
         if (selectedFile) {
             try {
-                imageUrl = await uploadGalleryImage(selectedFile, ebookId || 'new');
+                imageUrl = await uploadEbookCover(selectedFile);
                 if (!imageUrl) {
                     setErrors((prev) => ({ ...prev, cover_image: "Image upload failed." }));
                     setIsSubmitting(false);
@@ -198,7 +200,7 @@ export default function EditEbook() {
         // Handle PDF upload if a new file is selected
         if (selectedPDF) {
             try {
-                pdfUrl = await uploadGalleryImage(selectedPDF, ebookId || 'new');
+                pdfUrl = await uploadEbookDocument(selectedPDF);
                 if (!pdfUrl) {
                     setErrors((prev) => ({ ...prev, doc_url: "PDF upload failed." }));
                     setIsSubmitting(false);
@@ -255,7 +257,7 @@ export default function EditEbook() {
                                 {/* <img src={UploadIcon} alt="Upload Icon" className="mx-auto h-12 w-14 sm:h-[59px] sm:w-[69px] color-primary mb-4" /> */}
                                 {formData.cover_image && typeof formData.cover_image === "string" ? (
                                     <img
-                                        src={getFileUrl(formData.cover_image, 'gallery')}
+                                        src={getEbookCoverUrl(formData.cover_image)}
                                         alt="Ebook Cover"
                                         className="mx-auto h-12 w-14 sm:h-[59px] sm:w-[69px] mb-4 object-cover"
                                     />
@@ -301,7 +303,7 @@ export default function EditEbook() {
                             <div className="border-[1px] border-dashed border-[#DF1600] rounded-lg p-4 sm:p-6 md:p-8 text-center">
                                 {formData.doc_url && typeof formData.doc_url === "string" ? (
                                     <a
-                                        href={formData.doc_url}
+                                        href={getEbookDocumentUrl(formData.doc_url)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-600 underline text-sm"
@@ -414,6 +416,21 @@ export default function EditEbook() {
                                     />
                                     {errors.publish_date && <p className="text-red-600 text-xs mt-1">{errors.publish_date}</p>}
                                 </div>
+                            </div>
+
+                            {/* Description */}
+                            <div>
+                                <label className="block color-gray mb-2 font-montserrat font-semibold text-[14px] leading-[100%] tracking-normal align-middle">
+                                    Description
+                                </label>
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleInputChange}
+                                    rows={5}
+                                    placeholder="Enter ebook description..."
+                                    className="w-full px-3 py-2 border color-border rounded-md font-montserrat font-normal text-[12px] leading-[18px] tracking-normal text-[#0F0F0F] resize-y"
+                                />
                             </div>
 
 

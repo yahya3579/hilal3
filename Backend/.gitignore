@@ -2,7 +2,7 @@
 db.sqlite3
 .vercel
 # Uploads/media
-Backend/media/
+/media
 
 # Python cache
 *.pyc

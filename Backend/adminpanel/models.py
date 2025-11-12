@@ -131,6 +131,7 @@ class Ebook(models.Model):
     cover_image = models.CharField(max_length=255, blank=True, null=True)
     doc_url = models.CharField(max_length=255, blank=True, null=True)
     is_archived = models.BooleanField(default=False)  # New field to indicate if the ebook is archived
+    description = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False

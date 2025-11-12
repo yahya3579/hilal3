@@ -252,7 +252,7 @@ const PublicationPage = () => {
                                     src={pdfPreviewImage}
                                     alt="Download latest newsletter"
                                     className="w-full h-80 object-cover rounded-lg shadow-md hover:opacity-90 transition-opacity duration-200"
-                                />
+                                />``
                                 <span className="mt-3 inline-flex items-center justify-center w-full px-3 py-2 bg-red-600 text-white text-sm font-semibold rounded-md shadow hover:bg-red-700 transition-colors duration-200">
                                     View / Download PDF
                                 </span>

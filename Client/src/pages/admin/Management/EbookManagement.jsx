@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import articleCover from "../../../assets/articles-cover.jpg";
 import Loader from "../../../components/Loader/loader";
 import { useToast } from "../../../context/ToastContext";
+import { getEbookCoverUrl } from "../../../utils/localUpload";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 // API calls
 const fetchEbooks = async (page = 1, pageSize = 50, filters = {}) => {
@@ -333,7 +334,7 @@ const EbookManagement = () => {
                                     <td className="py-4 px-4 text-gray-700">{(currentPage - 1) * pageSize + index + 1}</td>
                                     <td className="py-4 px-4 text-gray-700">
                                         <img
-                                            src={ebook.cover_image || articleCover}
+                                            src={getEbookCoverUrl(ebook.cover_image) || articleCover}
                                             alt="Ebook Cover"
                                             className="w-[120px] h-[47px] object-cover rounded"
                                         />
