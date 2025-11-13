@@ -1,5 +1,8 @@
 import useAuthStore from './store';
 
+export const CATEGORY_FILTER_MONTH = 4; // April
+export const CATEGORY_FILTER_YEAR = 2025;
+
 // Helper function to get dynamic categories from store based on current path
 export const getDynamicCategoriesForPath = (pathname, searchParams = null) => {
     const categories = useAuthStore.getState().categories;
@@ -17,6 +20,7 @@ export const getDynamicCategoriesForPath = (pathname, searchParams = null) => {
     
     // Extract publication name from pathname (remove leading slash)
     let pathPublicationName = pathname === "/" ? "hilal-english" : pathname.substring(1);
+    let targetPublicationName = pathPublicationName;
     
     // If we're on the articles page and have a publication parameter, use that instead
     if (pathname === "/articles" && searchParams) {
@@ -37,6 +41,7 @@ export const getDynamicCategoriesForPath = (pathname, searchParams = null) => {
         // On publication pages, use the current path to determine publication
         const publication = publications.find(pub => pub.name === pathPublicationName);
         publicationId = publication ? publication.id : null;
+        targetPublicationName = publication ? publication.name : pathPublicationName;
         
         // Store the current publication in the store
         if (publication) {
@@ -46,17 +51,29 @@ export const getDynamicCategoriesForPath = (pathname, searchParams = null) => {
         // On other pages (ebooks, archives, etc.), use the stored publication
         if (currentPublication) {
             publicationId = currentPublication.id;
+            targetPublicationName = currentPublication.name;
         } else {
             // Fallback to hilal-english if no stored publication
             const defaultPublication = publications.find(pub => pub.name === "hilal-english");
             publicationId = defaultPublication ? defaultPublication.id : null;
+            targetPublicationName = defaultPublication ? defaultPublication.name : "hilal-english";
         }
     }
     
     // Filter categories from store based on the publication_id
-    const filteredCategories = categories.filter(category => 
+    let filteredCategories = categories.filter(category => 
         category.publication === publicationId
     );
+    
+    const monthCategoryCache = useAuthStore.getState().monthCategoryCache;
+    const cacheKey = `${CATEGORY_FILTER_YEAR}-${CATEGORY_FILTER_MONTH}`;
+    const categoriesByPublication = monthCategoryCache?.[cacheKey] || {};
+    const aprilCategories = categoriesByPublication[targetPublicationName] || [];
+    const allowedCategoryIds = new Set(aprilCategories.map(category => category.id));
+    
+    if (allowedCategoryIds.size > 0) {
+        filteredCategories = filteredCategories.filter(category => allowedCategoryIds.has(category.id));
+    }
     
     return {
         label: "Category",
@@ -118,12 +135,9 @@ export const getCategoryUrl = (categoryId, currentPath, searchParams = null, inc
     // Build base URL with category and publication
     let url = `/articles?category=${categoryId}&publication=${displayName}`;
     
-    // Add current month and year if requested (for navbar category dropdown)
+    // Add configured month and year if requested (for navbar category dropdown)
     if (includeCurrentDate) {
-        const currentDate = new Date();
-        const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
-        const currentYear = currentDate.getFullYear();
-        url += `&month=${currentMonth}&year=${currentYear}`;
+        url += `&month=${CATEGORY_FILTER_MONTH}&year=${CATEGORY_FILTER_YEAR}`;
     }
     
     return url;

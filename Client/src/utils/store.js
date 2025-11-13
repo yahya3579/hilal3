@@ -16,6 +16,7 @@ const useAuthStore = create((set) => ({
     loadingCategories: false,
     articlesList: [],
     loadingArticlesList: false,
+    monthCategoryCache: {},
     currentCategoryId: null,
     currentPublication: null,
     currentCategory: null,
@@ -60,6 +61,26 @@ const useAuthStore = create((set) => ({
     setLoadingCategories: (loading) => set({ loadingCategories: loading }),
     setArticlesList: (articles) => set({ articlesList: articles }),
     setLoadingArticlesList: (loading) => set({ loadingArticlesList: loading }),
+    setMonthCategoryCache: ({ month, year, publicationName, categories }) => {
+        if (!month || !year || !publicationName) {
+            return;
+        }
+
+        set((state) => {
+            const cacheKey = `${year}-${month}`;
+            const existingMonthCache = state.monthCategoryCache[cacheKey] || {};
+
+            return {
+                monthCategoryCache: {
+                    ...state.monthCategoryCache,
+                    [cacheKey]: {
+                        ...existingMonthCache,
+                        [publicationName]: categories,
+                    },
+                },
+            };
+        });
+    },
     setCurrentCategoryId: (categoryId) => set({ currentCategoryId: categoryId }),
     setCurrentPublication: (publication) => set({ currentPublication: publication }),
     setCurrentCategory: (category) => set({ currentCategory: category }),

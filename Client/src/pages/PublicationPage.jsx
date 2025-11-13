@@ -241,7 +241,7 @@ const PublicationPage = () => {
                             </Suspense>
                         )}
 
-                        <div className="mt-6 px-4">
+                        <div className="mt-12 px-4">
                             <a
                                 href={newsletterPdf}
                                 target="_blank"
@@ -251,8 +251,8 @@ const PublicationPage = () => {
                                 <img
                                     src={pdfPreviewImage}
                                     alt="Download latest newsletter"
-                                    className="w-full h-80 object-cover rounded-lg shadow-md hover:opacity-90 transition-opacity duration-200"
-                                />``
+                                    className="w-auto h-full object-contain hover:opacity-90 transition-opacity duration-200 bg-white"
+                                />
                                 <span className="mt-3 inline-flex items-center justify-center w-full px-3 py-2 bg-red-600 text-white text-sm font-semibold rounded-md shadow hover:bg-red-700 transition-colors duration-200">
                                     View / Download PDF
                                 </span>

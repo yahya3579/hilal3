@@ -19,7 +19,7 @@ export const CommonCard1English = ({ article }) => {
                         {/* Category Badge */}
                         <Link
                             to={`/category/${article.category_name || 'unknown'}`}
-                            className="absolute top-3 left-3 bg-red-500/85 text-white text-xs font-medium px-2 py-1 rounded max-w-[calc(100%-1.5rem)] break-words inline-block"
+                            className="absolute top-3 left-3 bg-red-500/85 text-white text-xs font-medium px-2 py-1 rounded max-w-[calc(100%-2.1rem)] break-words inline-block"
                             style={{ wordBreak: 'break-word', lineHeight: '1.3', zIndex: 9 }}
                         >
                             <span className="block">{article.category_display_name || 'Category'}</span>

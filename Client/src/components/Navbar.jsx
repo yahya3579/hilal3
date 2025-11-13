@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import useAuthStore from '../utils/store';
 import axios from "axios";
-import { getDynamicCategoriesForPath, getCategoryUrl } from '../utils/categories';
+import { getDynamicCategoriesForPath, getCategoryUrl, CATEGORY_FILTER_MONTH, CATEGORY_FILTER_YEAR } from '../utils/categories';
 
 
 const Navbar = () => {
@@ -36,6 +36,8 @@ const Navbar = () => {
     const publications = useAuthStore((state) => state.publications);
     const loadingPublications = useAuthStore((state) => state.loadingPublications);
     const currentPublication = useAuthStore((state) => state.currentPublication);
+    const monthCategoryCache = useAuthStore((state) => state.monthCategoryCache);
+    const setMonthCategoryCache = useAuthStore((state) => state.setMonthCategoryCache);
     
     // Get search params for URL parameters
     const [searchParams] = useSearchParams();
@@ -120,6 +122,8 @@ const Navbar = () => {
     const currentPub = getCurrentPublicationAndLogo();
     const currentLogo = currentPub ? getLogoForPublication(currentPub.name) : Logo;
     const currentLogoSize = currentPub ? getLogoSizeForPublication(currentPub.name) : "h-14 w-auto";
+    const aprilCacheKey = `${CATEGORY_FILTER_YEAR}-${CATEGORY_FILTER_MONTH}`;
+    const aprilCategoriesForCurrentPublication = currentPub?.name ? monthCategoryCache?.[aprilCacheKey]?.[currentPub.name] : undefined;
     
     // Store the current publication in the store when on publication pages
     useEffect(() => {
@@ -130,6 +134,77 @@ const Navbar = () => {
             }
         }
     }, [currentPub, location.pathname, publications]);
+
+    useEffect(() => {
+        const fetchAprilCategories = async () => {
+            if (!currentPub?.name) {
+                return;
+            }
+
+            if (aprilCategoriesForCurrentPublication) {
+                return;
+            }
+
+            try {
+                const params = new URLSearchParams();
+                params.append('month', CATEGORY_FILTER_MONTH.toString());
+                params.append('year', CATEGORY_FILTER_YEAR.toString());
+                params.append('publication', currentPub.name);
+
+                const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/articles/filtered/?${params.toString()}`);
+                const articles = response.data?.data || [];
+                const categoriesMap = new Map();
+                const categoriesInStore = useAuthStore.getState().categories || [];
+
+                articles.forEach((article) => {
+                    const categoryIdRaw = article?.category_id ?? article?.category ?? article?.categoryId;
+                    if (!categoryIdRaw) {
+                        return;
+                    }
+
+                    const categoryId = parseInt(categoryIdRaw, 10);
+                    if (Number.isNaN(categoryId)) {
+                        return;
+                    }
+
+                    if (!categoriesMap.has(categoryId)) {
+                        const categoryName = article?.category_name || article?.categoryName || '';
+                        let categoryDisplayName = article?.category_display_name || article?.categoryDisplayName || categoryName;
+
+                        if (!categoryDisplayName) {
+                            const storeCategory = categoriesInStore.find((category) => category.id === categoryId);
+                            if (storeCategory) {
+                                categoryDisplayName = storeCategory.display_name || storeCategory.name;
+                            }
+                        }
+
+                        categoriesMap.set(categoryId, {
+                            id: categoryId,
+                            name: categoryName || categoryDisplayName,
+                            displayName: categoryDisplayName || categoryName || '',
+                        });
+                    }
+                });
+
+                setMonthCategoryCache({
+                    month: CATEGORY_FILTER_MONTH,
+                    year: CATEGORY_FILTER_YEAR,
+                    publicationName: currentPub.name,
+                    categories: Array.from(categoriesMap.values()),
+                });
+            } catch (error) {
+                console.error("Error fetching April categories:", error?.response?.data || error.message);
+                setMonthCategoryCache({
+                    month: CATEGORY_FILTER_MONTH,
+                    year: CATEGORY_FILTER_YEAR,
+                    publicationName: currentPub.name,
+                    categories: [],
+                });
+            }
+        };
+
+        fetchAprilCategories();
+    }, [currentPub, aprilCategoriesForCurrentPublication, setMonthCategoryCache]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -193,7 +268,10 @@ const Navbar = () => {
         setIsMagazinesOpen(false);
     };
 
-    const handleDropdownLinkClick = () => {
+    const handleDropdownLinkClick = (event) => {
+        if (event) {
+            event.stopPropagation();
+        }
         setIsCategoryOpen(false);
         setIsMagazinesOpen(false);
         setIsEbookOpen(false);
@@ -538,7 +616,7 @@ const Navbar = () => {
                                     {getDynamicCategoriesForPath(location.pathname, searchParams).categories.map((category) => (
                                         <li key={category.id} className="transform transition-all duration-300 hover:translate-x-2">
                                             <Link
-                                                to={getCategoryUrl(category.id, location.pathname, searchParams)}
+                                                to={getCategoryUrl(category.id, location.pathname, searchParams, true)}
                                                 className="block py-2 text-base hover:underline hover:text-red-600 text-gray-600 font-medium"
                                                 onClick={closeMobileMenu}
                                             >
