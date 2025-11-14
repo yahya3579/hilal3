@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import Loader from "../Loader/loader";
 import CommonCard4English from "./english/CommonCard4English";
 import CommonCard5English from "./english/CommonCard5English";
@@ -8,6 +7,9 @@ import CommonCard5Urdu from "./urdu/CommonCard5Urdu";
 import { useNationalNewsArticlesLastMonths } from "../../hooks/usePublicationArticlesEnhanced";
 import { getCurrentMonthYear, getCurrentMonthYearUrdu } from "../../utils/dateUtils";
 
+const TARGET_MONTH = 4;
+const TARGET_YEAR = 2025;
+
 const NationalNews = ({ 
     publicationName = "Hilal English", 
     isUrdu = false,
@@ -15,10 +17,25 @@ const NationalNews = ({
     monthsCount = 8 // Number of past months to fetch articles from
 }) => {
     // Fetch articles from last N months (default: 8 months)
-    const { data, isLoading, error } = useNationalNewsArticlesLastMonths(publicationName, monthsCount);
+    const { data, isLoading, error } = useNationalNewsArticlesLastMonths(
+        publicationName,
+        monthsCount,
+        null,
+        TARGET_MONTH,
+        TARGET_YEAR
+    );
+    
+    const filteredArticles = (data || []).filter((article) => {
+        const publishedAt = article?.publish_date ? new Date(article.publish_date) : null;
+        return (
+            publishedAt &&
+            publishedAt.getMonth() + 1 === TARGET_MONTH &&
+            publishedAt.getFullYear() === TARGET_YEAR
+        );
+    });
     
     // Limit to first 6 articles for display
-    const articlesToDisplay = data?.slice(0, 6) || [];
+    const articlesToDisplay = filteredArticles.slice(0, 6);
 
     if (isLoading) return <Loader />;
     if (error) return <p className="p-4 text-red-500">Error fetching articles: {error.message}</p>;

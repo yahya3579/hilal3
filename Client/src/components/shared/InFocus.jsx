@@ -1,13 +1,15 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { Link } from "react-router-dom";
 import Loader from "../Loader/loader";
 import CommonCard2English from "./english/CommonCard2English";
 import CommonCard3English from "./english/CommonCard3English";
 import { CommonCard2Urdu } from "./urdu/CommonCard2Urdu";
 import CommonCard3Urdu from "./urdu/CommonCard3Urdu";
 import { getCurrentMonthYear, getCurrentMonthYearUrdu } from "../../utils/dateUtils";
+
+const TARGET_MONTH = 4;
+const TARGET_YEAR = 2025;
 
 const InFocus = ({ 
     publicationName = "hilal-english", 
@@ -32,14 +34,44 @@ const InFocus = ({
                 return [];
             }
             
+            // Helper to normalize Urdu strings for comparison (remove diacritics and whitespace)
+            const normalizeUrdu = (str = "") =>
+                str
+                    .replace(/[\u064B-\u065F]/g, "")
+                    .replace(/\s+/g, "")
+                    .trim();
+
             // Get publication-specific category names based on publication type
             const pubNameLower = publicationName.toLowerCase();
             let categoryNamesToTry = [];
             let inFocusCategory = null;
+
+            // For hilal-urdu, prefer the 'متفرقات' category explicitly
+            if (pubNameLower === 'hilal-urdu' || pubNameLower === 'hilal urdu') {
+                const targetNormalized = normalizeUrdu("متفرقات");
+                inFocusCategory = categories.find((cat) => {
+                    if (cat.publication !== publication.id) return false;
+
+                    const displayNameNormalized = normalizeUrdu(cat.display_name);
+                    const nameLower = (cat.name || "").toLowerCase();
+
+                    return (
+                        displayNameNormalized === targetNormalized ||
+                        cat.display_name === "متفرقات" ||
+                        nameLower === "mutafarqat" ||
+                        nameLower === "mutafarqat-urdu" ||
+                        nameLower === "misc-urdu"
+                    );
+                });
+
+                if (inFocusCategory) {
+                    console.log("Using متفرقات category for hilal-urdu InFocus");
+                }
+            }
             
             // Special handling for hilal-her and hilal-english-kids: Find category with most articles
-            if (pubNameLower === 'hilal-her' || pubNameLower === 'hilal her' || 
-                pubNameLower === 'hilal-english-kids' || pubNameLower === 'hilal english kids') {
+            if (!inFocusCategory && (pubNameLower === 'hilal-her' || pubNameLower === 'hilal her' || 
+                pubNameLower === 'hilal-english-kids' || pubNameLower === 'hilal english kids')) {
                 // Get all categories for this publication
                 const publicationCategories = categories.filter(cat => cat.publication === publication.id);
                 
@@ -73,7 +105,9 @@ const InFocus = ({
                     const pubType = pubNameLower.includes('kids') ? 'hilal-english-kids' : 'hilal-her';
                     console.log(`Using category '${inFocusCategory.name}' with ${categoryCounts[0].count} articles for ${pubType} InFocus`);
                 }
-            } else {
+            }
+
+            if (!inFocusCategory) {
                 // For other publications, use the existing logic
                 if (pubNameLower === 'hilal-english' || pubNameLower === 'hilal english') {
                     // For hilal-english, use in-focus
@@ -119,6 +153,8 @@ const InFocus = ({
             params.append('category_id', inFocusCategory.id.toString());
             params.append('publication', publicationName);
             params.append('count', '5'); // Get 5 articles for InFocus section
+            params.append('month', TARGET_MONTH.toString());
+            params.append('year', TARGET_YEAR.toString());
             
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/articles/filtered/?${params.toString()}`);
             const data = res.data.data || [];
@@ -133,7 +169,16 @@ const InFocus = ({
     // Extract articles and category from result
     // Handle both formats: { articles: [], category: {} } or just []
     const articles = Array.isArray(result) ? result : (result?.articles || []);
+    const filteredArticles = articles.filter((article) => {
+        const publishedAt = article?.publish_date ? new Date(article.publish_date) : null;
+        return (
+            publishedAt &&
+            publishedAt.getMonth() + 1 === TARGET_MONTH &&
+            publishedAt.getFullYear() === TARGET_YEAR
+        );
+    });
     const selectedCategory = result?.category;
+    const displayArticles = filteredArticles.slice(2);
 
     // Helper function to check if a string contains Urdu characters
     const containsUrduCharacters = (str) => {
@@ -177,20 +222,20 @@ const InFocus = ({
         }
         
         // If category from article is available, check for hilal-urdu-kids
-        if (articles.length > 0 && articles[0]?.category_display_name) {
-            if (isUrduKids && !containsUrduCharacters(articles[0].category_display_name)) {
+        if (filteredArticles.length > 0 && filteredArticles[0]?.category_display_name) {
+            if (isUrduKids && !containsUrduCharacters(filteredArticles[0].category_display_name)) {
                 // Category name is in English, use Urdu fallback for urdu kids
                 return "ہلال بچوں کے لیے اردو";
             }
             if (pubNameLower === "hilal-her" || pubNameLower === "hilal her") {
-                return articles[0].category_display_name;
+                return filteredArticles[0].category_display_name;
             }
             if (isUrduKids) {
-                return articles[0].category_display_name;
+                return filteredArticles[0].category_display_name;
             }
             // Fix HIAL -> HILAL spelling for hilal-english-kids
             if (isEnglishKids) {
-                return fixHilalSpelling(articles[0].category_display_name);
+                return fixHilalSpelling(filteredArticles[0].category_display_name);
             }
         }
         
@@ -205,8 +250,8 @@ const InFocus = ({
             return "KIDS IN FOCUS";
         } else if (pubNameLower === "hilal-her" || pubNameLower === "hilal her") {
             // Try to get category from first article if available
-            if (articles.length > 0 && articles[0]?.category_display_name) {
-                return articles[0].category_display_name;
+            if (filteredArticles.length > 0 && filteredArticles[0]?.category_display_name) {
+                return filteredArticles[0].category_display_name;
             }
             return "IN - FOCUS";
         } else if (pubNameLower === "hilal-digital" || pubNameLower === "hilal digital") {
@@ -236,14 +281,14 @@ const InFocus = ({
                 </div>
 
                 <div className="py-2">
-                    {articles && articles.length > 0 ? (
+                    {displayArticles && displayArticles.length > 0 ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Large Featured Article */}
-                            <LargeCard key={articles[0].id} data={articles} />
+                            <LargeCard key={displayArticles[0].id} data={displayArticles} />
 
                             {/* Smaller Articles */}
                             <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                                {articles.slice(1, 5).map((article) => (
+                                {displayArticles.slice(1, 5).map((article) => (
                                     <SmallCard key={article.id} article={article} />
                                 ))}
                             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 
@@ -14,16 +14,28 @@ const SearchResults = () => {
     const params = new URLSearchParams(location.search);
     const query = params.get("q") || "";
 
+    const trimmedQuery = (query || "").trim();
+    const normalizedQuery = trimmedQuery.toLowerCase();
+    const displayQuery = trimmedQuery || query || "";
+
     // Filter articles based on search query
-    const filteredArticles = allArticles.filter(article => {
-        const q = query.toLowerCase();
-        const stripHtml = (html) => html ? html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
-        return (
-            (article.title && article.title.toLowerCase().includes(q)) ||
-            (article.description && stripHtml(article.description).toLowerCase().includes(q)) ||
-            (article.author_name && article.author_name.toLowerCase().includes(q))
-        );
-    });
+    const filteredArticles = useMemo(() => {
+        if (!normalizedQuery) {
+            return [];
+        }
+
+        const stripHtml = (html) =>
+            html ? html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
+
+        return allArticles.filter((article) => {
+            const titleMatch = article.title?.toLowerCase().includes(normalizedQuery);
+            const descriptionText = stripHtml(article.description || "");
+            const descriptionMatch = descriptionText.toLowerCase().includes(normalizedQuery);
+            const authorMatch = article.author_name?.toLowerCase().includes(normalizedQuery);
+
+            return titleMatch || descriptionMatch || authorMatch;
+        });
+    }, [allArticles, normalizedQuery]);
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredArticles.length / articlesPerPage);
@@ -32,24 +44,34 @@ const SearchResults = () => {
     const currentArticles = filteredArticles.slice(startIndex, endIndex);
 
     useEffect(() => {
-        if (!query) return;
-        setLoading(true);
-        setError(null);
         setCurrentPage(1); // Reset to first page on new search
+        setError(null);
         
+        if (!trimmedQuery) {
+            setAllArticles([]);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+
         axios
-            .get(`${import.meta.env.VITE_API_URL}/api/articles/filtered/`)
+            .get(`${import.meta.env.VITE_API_URL}/api/articles/filtered/`, {
+                params: {
+                    search: trimmedQuery,
+                    count: 500,
+                },
+            })
             .then((res) => {
-                const articles = res.data.data || [];
-                console.log("Fetched articles:", articles);
+                const articles = res.data?.data || [];
                 setAllArticles(articles);
                 setLoading(false);
             })
-            .catch((err) => {
+            .catch(() => {
                 setError("Failed to fetch articles.");
                 setLoading(false);
             });
-    }, [query]);
+    }, [trimmedQuery]);
 
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
@@ -58,13 +80,13 @@ const SearchResults = () => {
 
     return (
         <div className="max-w-6xl mx-auto py-10 px-4 min-h-[60vh]">
-            <h2 className="text-2xl font-bold mb-6 text-[#DF1600]">Search Results for "{query}"</h2>
+            <h2 className="text-2xl font-bold mb-6 text-[#DF1600]">Search Results for "{displayQuery}"</h2>
             
             {loading && <div className="text-gray-500 text-center py-8">Loading...</div>}
             {error && <div className="text-red-500 text-center py-8">{error}</div>}
             
-            {!loading && !error && filteredArticles.length === 0 && (
-                <div className="text-gray-500 text-center py-8">No articles found for "{query}"</div>
+            {!loading && !error && filteredArticles.length === 0 && normalizedQuery && (
+                <div className="text-gray-500 text-center py-8">No articles found for "{displayQuery}"</div>
             )}
 
             {!loading && !error && filteredArticles.length > 0 && (
@@ -75,9 +97,13 @@ const SearchResults = () => {
                     </div>
 
                     {/* Responsive grid for articles */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-6 mb-8">
                         {currentArticles.map((article) => (
-                            <div key={article.id} className="bg-white rounded-lg shadow-md p-0 border border-gray-100 hover:shadow-lg transition-all overflow-hidden">
+                            <a
+                                key={article.id}
+                                href={`/article/${article.id}`}
+                                className="bg-white rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-all overflow-hidden flex flex-col group"
+                            >
                                 {/* Article Cover Image */}
                                 <div className="w-full h-48 overflow-hidden bg-gray-100">
                                     {article.cover_image ? (
@@ -103,10 +129,10 @@ const SearchResults = () => {
                                 </div>
                                 
                                 {/* Article Content */}
-                                <div className="p-5">
-                                    <a href={`/article/${article.id}`} className="text-lg font-semibold text-[#DF1600] mb-2 hover:underline block line-clamp-2">
+                                <div className="p-5 flex flex-col flex-1">
+                                    <div className="text-lg font-semibold text-gray-900 group-hover:text-[#DF1600] mb-2 block line-clamp-2 text-justify transition-colors duration-200">
                                         {article.title}
-                                    </a>
+                                    </div>
                                 
                                 {/* Article meta info */}
                                 <div className="text-sm text-gray-500 mb-2">
@@ -120,19 +146,15 @@ const SearchResults = () => {
 
                                 {/* Article description */}
                                 <div
-                                    className="text-gray-700 mb-3 line-clamp-3 text-sm"
+                                    className="text-gray-700 mb-3 line-clamp-3 text-sm text-justify flex-1"
                                     dangerouslySetInnerHTML={{
                                         __html: article.description
                                             ? article.description.replace(/<img[^>]*>/gi, "").slice(0, 120) + "..."
                                             : (article.content?.slice(0, 120) + "...")
                                     }}
                                 />
-                                
-                                    <a href={`/article/${article.id}`} className="text-red-600 hover:underline font-medium text-sm">
-                                        Read More →
-                                    </a>
                                 </div>
-                            </div>
+                            </a>
                         ))}
                     </div>
 

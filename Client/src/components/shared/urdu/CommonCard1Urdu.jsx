@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-const CommonCard1Urdu = ({ article, publicationName }) => {
+const CommonCard1Urdu = ({ article, publicationName, showBadge = true }) => {
     // Determine badge text based on publication
     const getBadgeText = () => {
         if (publicationName) {
@@ -14,6 +14,7 @@ const CommonCard1Urdu = ({ article, publicationName }) => {
     };
 
     const badgeText = getBadgeText();
+    const shouldShowBadge = showBadge && !(publicationName && publicationName.toLowerCase().includes("kids"));
 
     return (
         <>
@@ -30,13 +31,14 @@ const CommonCard1Urdu = ({ article, publicationName }) => {
                         }}
                     >
                         {/* Category Badge */}
-                        <Link
-                            to={`/category/${article.category_name || 'unknown'}`}
-                            className="absolute top-3 left-3 bg-red-500/80 text-white text-xs font-urdu-nastaliq-sm font-medium px-2 py-1 rounded"
-                            style={{ zIndex: 9 }}
-                        >
-                            {badgeText}
-                        </Link>
+                        {shouldShowBadge && (
+                            <div
+                                className="absolute top-3 left-3 bg-red-500/80 text-white text-xs font-urdu-nastaliq-sm font-medium px-2 py-1 rounded"
+                                style={{ zIndex: 9 }}
+                            >
+                                {badgeText}
+                            </div>
+                        )}
                     </div>
                 </Link>
                 {/* Content Section */}

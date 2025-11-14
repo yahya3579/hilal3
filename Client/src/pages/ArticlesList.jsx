@@ -75,7 +75,10 @@ const ArticlesList = () => {
             ) : (
                 <>
                     <div className="px-3 sm:px-6 pt-3 sm:pt-4 max-w-full">
-                        <h1 className={`text-lg sm:text-2xl font-medium uppercase tracking-tight text-[#DF1600] font-poppins mt-1 sm:mt-2 break-words ${isUrdu ? 'font-urdu-nastaliq-sm' : 'text-left'}`}>
+                        <h1
+                            className={`text-lg sm:text-2xl font-medium uppercase tracking-tight text-[#DF1600] font-poppins mt-1 sm:mt-2 break-words ${isUrdu ? 'font-urdu-nastaliq-sm' : 'text-left'}`}
+                            style={{ textAlign: isUrdu ? 'right' : 'left' }}
+                        >
                             {currentCategory?.display_name || currentPublication?.display_name || 'Articles'}
                         </h1>
                     </div>
@@ -85,7 +88,10 @@ const ArticlesList = () => {
                         <div className="px-3 sm:px-6 py-3 sm:py-4 max-w-full">
                             <div className="border-t-[3px] border-[#DF1600]">
                                 <div className="py-2">
-                                    <h2 className={`text-lg sm:text-xl font-semibold uppercase tracking-tight text-[#DF1600] font-poppins break-words ${isUrdu ? 'font-urdu-nastaliq-sm text-right' : 'text-left'}`}>
+                                    <h2
+                                        className={`text-lg sm:text-xl font-semibold uppercase tracking-tight text-[#DF1600] font-poppins break-words ${isUrdu ? 'font-urdu-nastaliq-sm' : 'text-left'}`}
+                                        style={{ textAlign: isUrdu ? 'right' : 'left' }}
+                                    >
                                         {isUrdu ? 'خبریں' : 'NEWS'}
                                     </h2>
                                 </div>
@@ -104,7 +110,10 @@ const ArticlesList = () => {
                             <div className="border-t-[3px] border-[#DF1600]">
                                 {newsArticles.length > 0 && (
                                     <div className="py-2">
-                                        <h2 className={`text-lg sm:text-xl font-semibold uppercase tracking-tight text-[#DF1600] font-poppins break-words ${isUrdu ? 'font-urdu-nastaliq-sm text-right' : 'text-left'}`}>
+                                        <h2
+                                            className={`text-lg sm:text-xl font-semibold uppercase tracking-tight text-[#DF1600] font-poppins break-words ${isUrdu ? 'font-urdu-nastaliq-sm' : 'text-left'}`}
+                                            style={{ textAlign: isUrdu ? 'right' : 'left' }}
+                                        >
                                             {isUrdu ? 'دیگر مضامین' : 'OTHER ARTICLES'}
                                         </h2>
                                     </div>

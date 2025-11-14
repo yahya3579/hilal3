@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom"
 
-export const CommonCard1English = ({ article }) => {
+export const CommonCard1English = ({ article, publicationName, showBadge = true }) => {
+    const normalizedPublication = (publicationName || "").toLowerCase();
+    const hideBadgeForPublication =
+        normalizedPublication.includes("kids") || normalizedPublication.includes("hilal-her");
+    const shouldShowBadge = showBadge && !hideBadgeForPublication;
+
     return (
         <>
 
@@ -17,13 +22,14 @@ export const CommonCard1English = ({ article }) => {
                         }}
                     >
                         {/* Category Badge */}
-                        <Link
-                            to={`/category/${article.category_name || 'unknown'}`}
-                            className="absolute top-3 left-3 bg-red-500/85 text-white text-xs font-medium px-2 py-1 rounded max-w-[calc(100%-2.1rem)] break-words inline-block"
-                            style={{ wordBreak: 'break-word', lineHeight: '1.3', zIndex: 9 }}
-                        >
-                            <span className="block">{article.category_display_name || 'Category'}</span>
-                        </Link>
+                        {shouldShowBadge && (
+                            <div
+                                className="absolute top-3 left-3 bg-red-500/85 text-white text-xs font-medium px-2 py-1 rounded max-w-[calc(100%-2.1rem)] break-words inline-block"
+                                style={{ wordBreak: 'break-word', lineHeight: '1.3', zIndex: 9 }}
+                            >
+                                <span className="block">{article.category_display_name || 'Category'}</span>
+                            </div>
+                        )}
                     </div>
                 </Link>
                 {/* Content Section */}

@@ -84,7 +84,7 @@ const ArmedForcesNewsUrdu = () => {
               className="w-20 h-28 object-cover flex-shrink-0 transition-opacity duration-300 group-hover:opacity-75"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-50 rounded">
-              <span className="text-white  text-xs urdu-text font-bold text-center px-1">
+              <span className="text-white text-xs urdu-text font-bold text-center px-1 w-full block">
                 ہلال کڈز انگلش
               </span>
             </div>
@@ -96,7 +96,7 @@ const ArmedForcesNewsUrdu = () => {
               className="w-20 h-28 object-cover flex-shrink-0 transition-opacity duration-300 group-hover:opacity-75"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-50 rounded">
-              <span className="text-white  text-xs urdu-text font-bold text-center px-1">
+              <span className="text-white text-xs urdu-text font-bold text-center px-1 w-full block">
                 ہلال انگلش
               </span>
             </div>
@@ -108,7 +108,7 @@ const ArmedForcesNewsUrdu = () => {
               className="w-20 h-28 object-cover flex-shrink-0 transition-opacity duration-300 group-hover:opacity-75"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-50 rounded">
-              <span className="text-white text-xs urdu-text font-bold text-center px-1">
+              <span className="text-white text-xs urdu-text font-bold text-center px-1 w-full block">
                 ہلال ہر
               </span>
             </div>
@@ -120,7 +120,7 @@ const ArmedForcesNewsUrdu = () => {
               className="w-20 h-28 object-cover flex-shrink-0 transition-opacity duration-300 group-hover:opacity-75"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-50 rounded">
-              <span className="text-white text-xs urdu-text font-bold text-center px-1">
+              <span className="text-white text-xs urdu-text font-bold text-center px-1 w-full block">
                 ہلال کڈز اردو
               </span>
             </div>
@@ -132,7 +132,7 @@ const ArmedForcesNewsUrdu = () => {
               className="w-20 h-28 object-cover flex-shrink-0 transition-opacity duration-300 group-hover:opacity-75"
             />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-50 rounded">
-              <span className="text-white text-xs urdu-text font-bold text-center px-1">
+              <span className="text-white text-xs urdu-text font-bold text-center px-1 w-full block">
                 ہلال اردو
               </span>
             </div>

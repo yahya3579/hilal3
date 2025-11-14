@@ -241,9 +241,15 @@ export const useNationalNewsArticles = (publicationName) => {
  * @param {number} articlesPerMonth - Number of articles per month (default: null for all)
  * @returns {Object} Query result with national news articles from last N months
  */
-export const useNationalNewsArticlesLastMonths = (publicationName, monthsCount = 8, articlesPerMonth = null) => {
+export const useNationalNewsArticlesLastMonths = (
+    publicationName,
+    monthsCount = 8,
+    articlesPerMonth = null,
+    monthOverride = null,
+    yearOverride = null
+) => {
     return useQuery({
-        queryKey: ["national-news-last-months", publicationName, monthsCount, articlesPerMonth],
+        queryKey: ["national-news-last-months", publicationName, monthsCount, articlesPerMonth, monthOverride, yearOverride],
         queryFn: async () => {
             if (!publicationName) {
                 throw new Error("Publication name is required");
@@ -352,12 +358,19 @@ export const useNationalNewsArticlesLastMonths = (publicationName, monthsCount =
             const now = new Date();
             const monthsToFetch = [];
             
-            for (let i = 0; i < monthsCount; i++) {
-                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            if (monthOverride && yearOverride) {
                 monthsToFetch.push({
-                    month: date.getMonth() + 1,
-                    year: date.getFullYear()
+                    month: monthOverride,
+                    year: yearOverride
                 });
+            } else {
+                for (let i = 0; i < monthsCount; i++) {
+                    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    monthsToFetch.push({
+                        month: date.getMonth() + 1,
+                        year: date.getFullYear()
+                    });
+                }
             }
             
             // Fetch articles for each month
@@ -404,6 +417,6 @@ export const useNationalNewsArticlesLastMonths = (publicationName, monthsCount =
  * @param {string} publicationName - The publication name
  * @returns {Object} Query result with misc articles
  */
-export const useMiscArticles = (publicationName) => {
-    return usePublicationCategoryArticlesEnhanced(publicationName, "misc", 4);
+export const useMiscArticles = (publicationName, month = null, year = null) => {
+    return usePublicationCategoryArticlesEnhanced(publicationName, "misc", 4, month, year);
 };

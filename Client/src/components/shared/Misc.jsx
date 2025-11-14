@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import Loader from "../Loader/loader";
 import CommonCard2English from "./english/CommonCard2English";
 import CommonCard3English from "./english/CommonCard3English";
@@ -8,12 +7,15 @@ import CommonCard3Urdu from "./urdu/CommonCard3Urdu";
 import { useMiscArticles } from "../../hooks/usePublicationArticlesEnhanced";
 import { getCurrentMonthYear } from "../../utils/dateUtils";
 
+const TARGET_MONTH = 4;
+const TARGET_YEAR = 2025;
+
 const Misc = ({ 
     publicationName = "Hilal English", 
     isUrdu = false,
     className = ""
 }) => {
-    const { data, isLoading, error } = useMiscArticles(publicationName);
+    const { data, isLoading, error } = useMiscArticles(publicationName, TARGET_MONTH, TARGET_YEAR);
 
     if (isLoading) return <Loader />;
     if (error) return <p className="p-4 text-red-500">Error fetching articles</p>;
@@ -26,6 +28,15 @@ const Misc = ({
     const title = isUrdu ? "متنوع" : "MISC";
     const titleClassName = isUrdu ? "heading-text-primary font-urdu-nastaliq-sm1" : "heading-text-primary";
     const titleDir = isUrdu ? "rtl" : "ltr";
+
+    const filteredData = (data || []).filter((article) => {
+        const publishedAt = article?.publish_date ? new Date(article.publish_date) : null;
+        return (
+            publishedAt &&
+            publishedAt.getMonth() + 1 === TARGET_MONTH &&
+            publishedAt.getFullYear() === TARGET_YEAR
+        );
+    });
 
     return (
         <div className={`bg-white font-poppins px-4 py-2 ${className}`}>
@@ -53,15 +64,15 @@ const Misc = ({
                     )}
                 </div>
 
-                {data && data.length > 0 ? (
+                {filteredData && filteredData.length > 0 ? (
                     <div className="py-2">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Large Featured Article */}
-                            <LargeCard key={data[0].id} data={data} />
+                            <LargeCard key={filteredData[0].id} data={filteredData} />
 
                             {/* Smaller Articles */}
                             <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                                {data.slice(1, 4).map((article) => (
+                                {filteredData.slice(1, 4).map((article) => (
                                     <SmallCard key={article.id} article={article} />
                                 ))}
                             </div>

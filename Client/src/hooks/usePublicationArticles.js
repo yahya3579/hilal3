@@ -6,9 +6,9 @@ import axios from "axios";
  * @param {string} publicationName - The publication name (e.g., "Hilal English", "Hilal Urdu")
  * @returns {Object} Query result with current month articles for the publication
  */
-export const usePublicationArticles = (publicationName) => {
+export const usePublicationArticles = (publicationName, month = null, year = null) => {
   return useQuery({
-    queryKey: ["publication-articles", publicationName],
+    queryKey: ["publication-articles", publicationName, month, year],
     queryFn: async () => {
       if (!publicationName) {
         throw new Error("Publication name is required");
@@ -17,6 +17,12 @@ export const usePublicationArticles = (publicationName) => {
       // Use filtered API with publication parameter
       const params = new URLSearchParams();
       params.append('publication', publicationName);
+      if (month) {
+        params.append('month', month);
+      }
+      if (year) {
+        params.append('year', year);
+      }
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/articles/filtered/?${params.toString()}`
       );

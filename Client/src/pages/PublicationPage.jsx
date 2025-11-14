@@ -43,8 +43,9 @@ const componentMappings = {
         TrendingPublications: lazy(() => import("../components/shared/TrendingPublications")),
         ArmedForcesNews: lazy(() => import("../components/Home/ArmedForcesNews")),
         HilalDigitalGrid: lazy(() => import("../components/shared/HilalDigitalGrid")),
-        InFocusSection: lazy(() => import("../components/shared/InFocus")),
-        NationalNewsSection: lazy(() => import("../components/shared/NationalNews")),
+        AllArticlesGrid: lazy(() => import("../components/shared/PublicationAllArticlesGrid")),
+        // InFocusSection: lazy(() => import("../components/shared/InFocus")),
+        // NationalNewsSection: lazy(() => import("../components/shared/NationalNews")),
         NewsLetter: lazy(() => import("../components/Home/NewsLetter")),
         Advertisement2: lazy(() => import("../components/Home/Advertisement2")),
         Advertisement1: lazy(() => import("../components/Home/Advertisement1")),
@@ -58,9 +59,10 @@ const componentMappings = {
         TrendingPublications: lazy(() => import("../components/shared/TrendingPublications")),
         ArmedForcesNews: lazy(() => import("../components/urdu/ArmedForcesNewsUrdu")),
         HilalDigitalGrid: lazy(() => import("../components/shared/HilalDigitalGrid")),
+        AllArticlesGrid: lazy(() => import("../components/shared/PublicationAllArticlesGrid")),
         NewsLetter: lazy(() => import("../components/urdu/NewsLetterUrdu")),
-        NationalNewsSection: lazy(() => import("../components/shared/NationalNews")),
-        InFocusSection: lazy(() => import("../components/shared/InFocus")),
+        // NationalNewsSection: lazy(() => import("../components/shared/NationalNews")),
+        // InFocusSection: lazy(() => import("../components/shared/InFocus")),
         MiscSection: lazy(() => import("../components/shared/Misc")),
         Advertisement2: lazy(() => import("../components/urdu/Advertisment2Urdu")),
         Advertisement1: lazy(() => import("../components/Home/Advertisement1")),
@@ -74,8 +76,9 @@ const componentMappings = {
         TrendingPublications: lazy(() => import("../components/shared/TrendingPublications")),
         ArmedForcesNews: lazy(() => import("../components/Home/ArmedForcesNews")),
         HilalDigitalGrid: lazy(() => import("../components/shared/HilalDigitalGrid")),
-        InFocusSection: lazy(() => import("../components/shared/InFocus")),
-        NationalNewsSection: lazy(() => import("../components/shared/NationalNews")),
+        AllArticlesGrid: lazy(() => import("../components/shared/PublicationAllArticlesGrid")),
+        // InFocusSection: lazy(() => import("../components/shared/InFocus")),
+        // NationalNewsSection: lazy(() => import("../components/shared/NationalNews")),
         NewsLetter: lazy(() => import("../components/Home/NewsLetter")),
         Advertisement2: lazy(() => import("../components/Home/Advertisement2")),
         Advertisement1: lazy(() => import("../components/Home/Advertisement1")),
@@ -187,6 +190,15 @@ const PublicationPage = () => {
                     {components.NationalNewsSection && (
                         <Suspense fallback={<ComponentSkeleton height="h-64" />}>
                             <components.NationalNewsSection 
+                                publicationName={publicationName}
+                                isUrdu={publicationParam?.includes('urdu') || false}
+                            />
+                        </Suspense>
+                    )}
+
+                    {components.AllArticlesGrid && (
+                        <Suspense fallback={<ComponentSkeleton height="h-64" />}>
+                            <components.AllArticlesGrid 
                                 publicationName={publicationName}
                                 isUrdu={publicationParam?.includes('urdu') || false}
                             />

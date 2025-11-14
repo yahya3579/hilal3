@@ -1755,9 +1755,11 @@ class GetFilteredArticlesView(APIView):
             'author', 'publication', 'magazine', 'category'
         )
         
-        # Add search filter for title if provided (before ordering and pagination)
+        # Add search filter for title or description if provided (before ordering and pagination)
         if search:
-            articles = articles.filter(title__icontains=search)
+            articles = articles.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
         
         # Order by publish date
         articles = articles.order_by('-publish_date')

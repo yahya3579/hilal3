@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { EnvelopeIcon } from "@heroicons/react/24/solid";
 import { ExternalLink, Star } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import useAuthStore from "../utils/store";
@@ -181,10 +181,10 @@ const processArticleContent = (content, coverImageUrl) => {
       console.log('Keeping other image in content:', imgSrc);
       // Ensure inline images are horizontally centered and responsive
       img.style.display = 'block';
-      img.style.marginLeft = 'auto';
-      img.style.marginRight = 'auto';
-      img.style.marginTop = '12px';
-      img.style.marginBottom = '12px';
+      img.style.marginLeft = '12px';
+      img.style.marginRight = '12px';
+      img.style.marginTop = '6px';
+      img.style.marginBottom = '0';
       img.style.maxWidth = '100%';
       img.style.height = 'auto';
     }
@@ -207,6 +207,7 @@ const processArticleContent = (content, coverImageUrl) => {
 };
 
 export default function ArticlePage() {
+  const navigate = useNavigate();
   const userId = useAuthStore((state) => state.userId);
   const { articleId } = useParams();
   const [comment, setComment] = useState("");
@@ -291,6 +292,18 @@ export default function ArticlePage() {
 
   return (
     <div className={`w-full min-h-screen bg-white `}>
+      <div className={`px-4 lg:px-6 pt-4 ${isUrdu ? 'text-right' : 'text-left'}`} dir={isUrdu ? 'rtl' : 'ltr'}>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className={`inline-flex items-center gap-2 text-sm sm:text-base font-medium text-red-600 hover:text-red-700 transition-colors ${isUrdu ? 'flex-row-reverse' : ''}`}
+        >
+          <span aria-hidden="true">{'←'}</span>
+          <span className={isUrdu ? 'font-urdu-nastaliq-sm' : 'font-poppins'}>
+            {isUrdu ? 'واپس جائیں' : 'Go Back'}
+          </span>
+        </button>
+      </div>
       {/* Main layout with sidebar starting from top */}
       <div className="flex flex-col lg:flex-row min-h-screen " dir={isUrdu ? 'rtl' : 'ltr'}>
         {/* Left Sidebar - 25% width on desktop, full width on mobile */}
@@ -384,7 +397,7 @@ export default function ArticlePage() {
               {/* Heading and Date Section */}
               <div className="space-y-2">
                 {/* Article Title */}
-                <h1 className={`text-black w-full font-medium ${isUrdu ? '' : 'line-clamp-3 lg:line-clamp-2'} text-[18px] sm:text-[20px] lg:text-[32px] ${isUrdu ? 'leading-[160%] lg:leading-[150%]' : 'leading-[120%] lg:leading-[110%]'} tracking-[-0.03em] uppercase text-center lg:text-left ${isUrdu ? 'font-urdu-nastaliq-sm lg:text-right' : 'font-poppins'}`} dir={isUrdu ? 'rtl' : 'ltr'}>
+                <h1 className={`text-black w-full font-medium text-[18px] sm:text-[20px] lg:text-[32px] ${isUrdu ? 'leading-[160%] lg:leading-[150%]' : 'leading-[120%] lg:leading-[110%]'} tracking-[-0.03em] uppercase text-justify ${isUrdu ? 'font-urdu-nastaliq-sm' : 'font-poppins'}`} dir={isUrdu ? 'rtl' : 'ltr'}>
                   {article?.title || "Article Title"}
                 </h1>
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function InternationIssuesCard({ article, isUrdu }) {
     return (
         <div className="w-full max-w-full overflow-hidden">
-            <div className={`flex flex-col md:flex-row bg-white shadow-sm overflow-hidden w-full max-w-full ${isUrdu ? 'md:flex-row-reverse' : ''}`}>
+            <div className={`flex flex-col md:flex-row bg-white overflow-hidden w-full max-w-full ${isUrdu ? 'md:flex-row-reverse' : ''}`}>
                 {/* Left side - Image with overlay text */}
                 <div className="relative w-full md:w-[40%] flex-shrink-0 font-poppins">
                     <Link to={`/article/${article.id}`} className="block w-full h-full">
@@ -21,7 +21,7 @@ export default function InternationIssuesCard({ article, isUrdu }) {
                     <div className="min-w-0">
                         {/* Main headline */}
                         <Link to={`/article/${article.id}`} className="block">
-                            <h1 className={`text-[20px] md:text-[24px] font-medium leading-[auto] tracking-[-0.03em] text-black text-justify break-words cursor-pointer hover:text-[#DF1600] transition-colors ${isUrdu ? ' font-urdu-nastaliq-sm' : ''}`}>
+                            <h1 className={`text-[20px] md:text-[24px] font-medium leading-[auto] tracking-[-0.03em] text-black text-justify break-words line-clamp-3 cursor-pointer hover:text-[#DF1600] transition-colors ${isUrdu ? ' font-urdu-nastaliq-sm' : ''}`}>
                                 {article.title}
                             </h1>
                         </Link>
